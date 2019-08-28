@@ -12,10 +12,10 @@ using namespace std;
 
 clock_t t0, t1;
 
-vector<uint32_t> primes_v;
+typedef vector<uint32_t> primes_t;
+primes_t primes_v, prim_v[8];
 
 typedef vector<uint16_t> step_t;
-
 step_t step_v, mstp_v[8];
 
 const uint32_t knownprime[13] = { 1,2,3,5,7,11,13,17,19,23,29,31,37 };
@@ -227,6 +227,54 @@ void make_msteps(int np, int nt) { // np : number of known primes to be multipli
 }
 
 void make_primes(uint32_t n, int np, int nt) {
+	uint32_t divisor, di, candidate, ci, i, pn, start = knownprime[np + 1];
+	bool divides;
+	clock_t t0 = clock();
+
+	make_msteps(np, nt);
+	//cout << "\n\n np : " << np << " cycle of " << setw(14) << zstr(cycle) << " searching primes up to " << setw(14) << zstr(n) << "\n";
+	primes_v.clear();
+	for (i = 1; i <= np; ++i)
+		primes_v.push_back(knownprime[i]);
+	pn = np;
+	candidate = start;
+	ci = 2;
+	while (candidate <= n) {
+		divides = 0;
+		//cout << "\n ci"<<setw(5)<<ci<<" step[ci] "<<setw(5)<<step_v[ci]<<" candidate : " << setw(5) << candidate;
+		di = 2;
+		divisor = start;
+		//cout << " divisor " << setw(5) << divisor;
+		while (divisor <= sqrt(candidate)) {
+			//cout <<"."<< setw(5) << divisor;
+			divides = (candidate % divisor == 0);
+			if (divides) break;
+			if (di > cycle) di = 1;
+			divisor += step_v[di];
+			++di;
+		}
+		if (!divides) {
+			++pn;
+			primes_v.push_back(candidate);
+			//cout << " -- add " << candidate;
+		}
+		candidate += step_v[ci];
+		//cout << " new candidate " << setw(5) << candidate;
+		++ci;
+		if (ci > cycle) ci = 1;
+		//cout << " new ci  " << setw(5) << ci;
+	}
+	cout << "\n " << setw(15) << zstr(n) << setw(4) << np << setw(4) << nt << " finished with " << setw(14) << zstr(pn) << " prime numbers found, last one is ";
+	cout << setw(14) << zstr(primes_v[pn - 1]) << " in " << lapsed_time(t0) << "\n\n";
+	if (pn < 10000) {
+		for (auto s : primes_v) cout << setw(5) << s;
+		cout << "\n\n";
+	}
+}
+
+
+
+void make_primes_sinlge_thread(uint32_t n, int np, int nt) {
 	uint32_t divisor, di, candidate, ci, i, pn, start = knownprime[np + 1];
 	bool divides;
 	clock_t t0 = clock();
