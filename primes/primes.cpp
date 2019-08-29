@@ -269,17 +269,17 @@ void make_primes_multi (uint32_t maxn, int np, int nt) {
 	uint32_t p,t;
 	clock_t t0 = clock();
 
-	cout << "\n\n np: " << setw(2) << np << " nt: " << setw(2) << nt;
+	cout << "\n\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
 	make_msteps(np, nt);
-	cout << " cycle: " << setw(14) << zstr(cycle) << " -> up to " << setw(14) << zstr(maxn);
+	cout << " c: " << setw(14) << zstr(cycle) << " -> " << setw(14) << zstr(maxn);
 	primes_v.clear();
 	for (p = 1; p <= np; ++p) primes_v.push_back(knownprime[p]);
 	primesfound = np;
 	for (t = 0; t < nt; ++t) check_candidates(maxn,np,t);
-	cout << " done! " << setw(14) << zstr(primesfound) << " primes found in ";
-	cout << lapsed_time(t0) << " ... sorting ... ";
+	cout << " !: " << setw(14) << zstr(primesfound) << " primes in ";
+	cout << lapsed_time(t0) << " - sort - ";
 	sort(primes_v.begin(), primes_v.end());
-	cout << " last one: " << setw(14) << zstr(primes_v[primesfound - 1]) << " in " << lapsed_time(t0) << "\n\n";
+	cout << " last: " << setw(14) << zstr(primes_v[primesfound - 1]) << " in " << lapsed_time(t0) << "\n\n";
 	if (primesfound < 1200) {
 		for (auto s : primes_v) cout << setw(5) << s;
 		cout << "\n\n";
@@ -293,9 +293,9 @@ void make_primes_single(uint32_t maxn, int np, int nt) {
 	bool divides;
 	clock_t t0 = clock();
 
-	cout << "\n\n np: " << setw(2) << np << " nt: " << setw(2) << nt;
+	cout << "\n\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
 	make_msteps(np, nt);
-	cout << " cycle: " << setw(14) << zstr(cycle) << " -> up to " << setw(14) << zstr(maxn);
+	cout << " c: " << setw(14) << zstr(cycle) << " -> " << setw(14) << zstr(maxn);
 	primes_v.clear();
 	for (i = 1; i <= np; ++i)
 		primes_v.push_back(knownprime[i]);
@@ -327,7 +327,7 @@ void make_primes_single(uint32_t maxn, int np, int nt) {
 		if (ci > cycle) ci = 1;
 		//cout << " new ci  " << setw(5) << ci;
 	}
-	cout << " done! " << setw(14) << zstr(pn) << " primes found, last one: ";
+	cout << " !: " << setw(14) << zstr(pn) << " primes,                          last: ";
 	cout << setw(14) << zstr(primes_v[pn - 1]) << " in " << lapsed_time(t0) << "\n\n";
 	if (pn < 1200) {
 		for (auto s : primes_v) cout << setw(5) << s;
