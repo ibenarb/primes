@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 //#include <list>
 #include <future>
 //#include <thread>
@@ -13,7 +14,7 @@ using namespace std;
 clock_t t0, t1;
 
 typedef vector<uint32_t> primes_t;
-primes_t primes_v, prim_v[8];
+primes_t primes_v;
 
 typedef vector<uint16_t> step_t;
 step_t step_v, mstp_v[8];
@@ -21,7 +22,7 @@ step_t step_v, mstp_v[8];
 const uint32_t knownprime[13] = { 1,2,3,5,7,11,13,17,19,23,29,31,37 };
 const uint64_t cyclelength[16] = { 1, 1, 2, 8, 48, 480, 5760, 92160, 1658880, 36495360, 1021870080, 30656102400, 1103619686400, 44144787456000, 1854081073152000, 85287729364992000 };
 
-uint32_t cycle;
+uint32_t cycle, primesfound;
 
 string lapsed_time(clock_t t0) {
 	uint32_t days, hrs, mins, secs, clks;
@@ -226,20 +227,18 @@ void make_msteps(int np, int nt) { // np : number of known primes to be multipli
 	}*/
 }
 
-void make_primes(uint32_t n, int np, int nt) {
-	uint32_t divisor, di, candidate, ci, i, pn, start = knownprime[np + 1];
+void check_candidates(uint32_t maxn, int np, int t) {
+	uint32_t start, candidate, ci, divisor, di;
 	bool divides;
-	clock_t t0 = clock();
 
-	make_msteps(np, nt);
-	//cout << "\n\n np : " << np << " cycle of " << setw(14) << zstr(cycle) << " searching primes up to " << setw(14) << zstr(n) << "\n";
-	primes_v.clear();
-	for (i = 1; i <= np; ++i)
-		primes_v.push_back(knownprime[i]);
-	pn = np;
-	candidate = start;
-	ci = 2;
-	while (candidate <= n) {
+	ci = 1;
+	candidate = mstp_v[t][0];
+	if (t == 0) {
+		ci = 2;
+		candidate += mstp_v[t][1];
+	}
+	start = knownprime[np + 1];
+	while (candidate <= maxn) {
 		divides = 0;
 		//cout << "\n ci"<<setw(5)<<ci<<" step[ci] "<<setw(5)<<step_v[ci]<<" candidate : " << setw(5) << candidate;
 		di = 2;
@@ -254,19 +253,34 @@ void make_primes(uint32_t n, int np, int nt) {
 			++di;
 		}
 		if (!divides) {
-			++pn;
+			++primesfound;
 			primes_v.push_back(candidate);
 			//cout << " -- add " << candidate;
 		}
-		candidate += step_v[ci];
+		candidate += mstp_v[t][ci];
 		//cout << " new candidate " << setw(5) << candidate;
 		++ci;
 		if (ci > cycle) ci = 1;
 		//cout << " new ci  " << setw(5) << ci;
 	}
-	cout << "\n " << setw(15) << zstr(n) << setw(4) << np << setw(4) << nt << " finished with " << setw(14) << zstr(pn) << " prime numbers found, last one is ";
-	cout << setw(14) << zstr(primes_v[pn - 1]) << " in " << lapsed_time(t0) << "\n\n";
-	if (pn < 10000) {
+}
+
+void make_primes_multi (uint32_t maxn, int np, int nt) {
+	uint32_t p,t;
+	clock_t t0 = clock();
+
+	cout << "\n\n np: " << setw(2) << np << " nt: " << setw(2) << nt;
+	make_msteps(np, nt);
+	cout << " cycle: " << setw(14) << zstr(cycle) << " -> up to " << setw(14) << zstr(maxn);
+	primes_v.clear();
+	for (p = 1; p <= np; ++p) primes_v.push_back(knownprime[p]);
+	primesfound = np;
+	for (t = 0; t < nt; ++t) check_candidates(maxn,np,t);
+	cout << " done! " << setw(14) << zstr(primesfound) << " primes found in ";
+	cout << lapsed_time(t0) << " ... sorting ... ";
+	sort(primes_v.begin(), primes_v.end());
+	cout << " last one: " << setw(14) << zstr(primes_v[primesfound - 1]) << " in " << lapsed_time(t0) << "\n\n";
+	if (primesfound < 1200) {
 		for (auto s : primes_v) cout << setw(5) << s;
 		cout << "\n\n";
 	}
@@ -274,20 +288,21 @@ void make_primes(uint32_t n, int np, int nt) {
 
 
 
-void make_primes_sinlge_thread(uint32_t n, int np, int nt) {
+void make_primes_single(uint32_t maxn, int np, int nt) {
 	uint32_t divisor, di, candidate, ci, i, pn, start = knownprime[np + 1];
 	bool divides;
 	clock_t t0 = clock();
 
+	cout << "\n\n np: " << setw(2) << np << " nt: " << setw(2) << nt;
 	make_msteps(np, nt);
-	//cout << "\n\n np : " << np << " cycle of " << setw(14) << zstr(cycle) << " searching primes up to " << setw(14) << zstr(n) << "\n";
+	cout << " cycle: " << setw(14) << zstr(cycle) << " -> up to " << setw(14) << zstr(maxn);
 	primes_v.clear();
 	for (i = 1; i <= np; ++i)
 		primes_v.push_back(knownprime[i]);
 	pn = np;
 	candidate = start;
 	ci = 2;
-	while (candidate <= n) {
+	while (candidate <= maxn) {
 		divides = 0;
 		//cout << "\n ci"<<setw(5)<<ci<<" step[ci] "<<setw(5)<<step_v[ci]<<" candidate : " << setw(5) << candidate;
 		di = 2;
@@ -312,24 +327,23 @@ void make_primes_sinlge_thread(uint32_t n, int np, int nt) {
 		if (ci > cycle) ci = 1;
 		//cout << " new ci  " << setw(5) << ci;
 	}
-	cout << "\n " << setw(15) << zstr(n) << setw(4) << np << setw(4) << nt << " finished with " << setw(14) << zstr(pn) << " prime numbers found, last one is ";
+	cout << " done! " << setw(14) << zstr(pn) << " primes found, last one: ";
 	cout << setw(14) << zstr(primes_v[pn - 1]) << " in " << lapsed_time(t0) << "\n\n";
-	if (pn < 10000) {
+	if (pn < 1200) {
 		for (auto s : primes_v) cout << setw(5) << s;
 		cout << "\n\n";
 	}
 }
 
 void loop() {
-	//for (int i = 2; i < 10; ++i) make_primes(pow(2,24)-1, i, 1);
-	for (int i = 9; i > 6; --i) make_primes(pow(2, 31), i, 1);
 	cout << "\n\n";
 }
 
 int main() {
-	cout << "\n\n " << zstr(step_v.max_size());
-	for (int i = 0; i < 8; ++i) cout << setw(15) << zstr(mstp_v[i].max_size());
+	//cout << "\n\n " << zstr(step_v.max_size());
+	//for (int i = 0; i < 8; ++i) cout << setw(15) << zstr(mstp_v[i].max_size());
 	cout << "\n ";
-	loop();
+	make_primes_single(pow(2, 24), 8, 8);
+	make_primes_multi(pow(2, 24), 8, 8);
 	return(0);
 }
