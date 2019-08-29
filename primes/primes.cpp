@@ -15,7 +15,7 @@ typedef vector<uint32_t> primes_t;
 primes_t primes_v;
 
 typedef vector<uint16_t> step_t;
-step_t step_v, mstp_v[8];
+step_t step_v, mstp_v[32];
 
 mutex mtx;
 
@@ -282,7 +282,7 @@ void make_primes_multi_a(uint32_t maxn, int np, int nt) {
 	uint32_t p, t;
 	clock_t t0 = clock();
 
-	cout << "\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
+	cout << "\n multi  a np:" << setw(2) << np << " nt:" << setw(2) << nt;
 	make_msteps(np, nt);
 	cout << " c: " << setw(14) << zstr(cycle) << " -> " << setw(14) << zstr(maxn);
 	primes_v.clear();
@@ -306,7 +306,7 @@ void make_primes_multi_t(uint32_t maxn, int np, int nt) {
 	uint32_t p, t;
 	clock_t t0 = clock();
 
-	cout << "\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
+	cout << "\n multi  t np:" << setw(2) << np << " nt:" << setw(2) << nt;
 	make_msteps(np, nt);
 	cout << " c: " << setw(14) << zstr(cycle) << " -> " << setw(14) << zstr(maxn);
 	primes_v.clear();
@@ -329,7 +329,7 @@ void make_primes_single_1(uint32_t maxn, int np, int nt) {
 	uint32_t p,t;
 	clock_t t0 = clock();
 
-	cout << "\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
+	cout << "\n single 1 np:" << setw(2) << np << " nt:" << setw(2) << nt;
 	make_msteps(np, nt);
 	cout << " c: " << setw(14) << zstr(cycle) << " -> " << setw(14) << zstr(maxn);
 	primes_v.clear();
@@ -353,7 +353,7 @@ void make_primes_single_0(uint32_t maxn, int np, int nt) {
 	bool divides;
 	clock_t t0 = clock();
 
-	cout << "\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
+	cout << "\n single 0 np:" << setw(2) << np << " nt:" << setw(2) << nt;
 	make_msteps(np, nt);
 	cout << " c: " << setw(14) << zstr(cycle) << " -> " << setw(14) << zstr(maxn);
 	primes_v.clear();
@@ -396,10 +396,10 @@ void make_primes_single_0(uint32_t maxn, int np, int nt) {
 }
 
 void loop() {
-	cout << "\n\n";
-	make_primes_single_0(pow(2, 24), 8, 8);
-	make_primes_single_1(pow(2, 24), 8, 8);
-	for (int i=1;i<9;++i) make_primes_multi_t(pow(2, 24), 8, i);
+	uint32_t maxn;
+	int i;
+	maxn = pow(2, 28);
+	for (int i = 1; i < 33; ++i) make_primes_multi_t(maxn, 8, i);
 }
 
 int main() {
@@ -407,10 +407,6 @@ int main() {
 	//cout << "\n\n " << zstr(step_v.max_size());
 	//for (int i = 0; i < 8; ++i) cout << setw(15) << zstr(mstp_v[i].max_size());
 	cout << "\n ";
-	//make_primes_single_0(pow(2, 24), 8, 8);
-	//make_primes_single_0(maxn, 8, 8);
-	//make_primes_single_1(maxn, 8, 8);
-	make_primes_multi_a(maxn, 8, 8);
-	make_primes_multi_a(maxn, 9, 8);
+	loop();
 	return(0);
 }
