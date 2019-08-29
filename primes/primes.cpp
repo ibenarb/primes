@@ -5,9 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-//#include <list>
 #include <future>
-//#include <thread>
 #include "time.h"
 using namespace std;
 
@@ -18,6 +16,8 @@ primes_t primes_v;
 
 typedef vector<uint16_t> step_t;
 step_t step_v, mstp_v[8];
+
+mutex mtx;
 
 const uint32_t knownprime[13] = { 1,2,3,5,7,11,13,17,19,23,29,31,37 };
 const uint64_t cyclelength[16] = { 1, 1, 2, 8, 48, 480, 5760, 92160, 1658880, 36495360, 1021870080, 30656102400, 1103619686400, 44144787456000, 1854081073152000, 85287729364992000 };
@@ -227,11 +227,22 @@ void make_msteps(int np, int nt) { // np : number of known primes to be multipli
 	}*/
 }
 
+
+void merge_results(uint32_t pfound, primes_t results) {
+	mtx.lock();
+	primesfound += pfound;
+	primes_v.insert(primes_v.end(), results.begin(), results.end());
+	mtx.unlock();
+}
+
 void check_candidates(uint32_t maxn, int np, int t) {
-	uint32_t start, candidate, ci, divisor, di;
+	primes_t results_v;
+	uint32_t start, candidate, ci, divisor, di, pfound;
 	bool divides;
 
 	ci = 1;
+	pfound = 0;
+	results_v.clear();
 	candidate = mstp_v[t][0];
 	if (t == 0) {
 		ci = 2;
@@ -253,8 +264,8 @@ void check_candidates(uint32_t maxn, int np, int t) {
 			++di;
 		}
 		if (!divides) {
-			++primesfound;
-			primes_v.emplace_back(candidate);
+			++pfound;
+			results_v.emplace_back(candidate);
 			//cout << " -- add " << candidate;
 		}
 		candidate += mstp_v[t][ci];
@@ -263,6 +274,7 @@ void check_candidates(uint32_t maxn, int np, int t) {
 		if (ci > cycle) ci = 1;
 		//cout << " new ci  " << setw(5) << ci;
 	}
+	merge_results(pfound, results_v);
 }
 
 void make_primes_multi_a(uint32_t maxn, int np, int nt) {
@@ -391,13 +403,14 @@ void loop() {
 }
 
 int main() {
-	uint32_t maxn = pow(2, 10);
+	uint32_t maxn = pow(2, 30);
 	//cout << "\n\n " << zstr(step_v.max_size());
 	//for (int i = 0; i < 8; ++i) cout << setw(15) << zstr(mstp_v[i].max_size());
 	cout << "\n ";
 	//make_primes_single_0(pow(2, 24), 8, 8);
-	make_primes_single_1(maxn, 8, 8);
-	//make_primes_multi_t(pow(2, 24), 8, 8);
+	//make_primes_single_0(maxn, 8, 8);
+	//make_primes_single_1(maxn, 8, 8);
 	make_primes_multi_a(maxn, 8, 8);
+	make_primes_multi_a(maxn, 9, 8);
 	return(0);
 }
