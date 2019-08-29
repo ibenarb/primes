@@ -254,7 +254,7 @@ void check_candidates(uint32_t maxn, int np, int t) {
 		}
 		if (!divides) {
 			++primesfound;
-			primes_v.push_back(candidate);
+			primes_v.emplace_back(candidate);
 			//cout << " -- add " << candidate;
 		}
 		candidate += mstp_v[t][ci];
@@ -265,11 +265,59 @@ void check_candidates(uint32_t maxn, int np, int t) {
 	}
 }
 
-void make_primes_multi (uint32_t maxn, int np, int nt) {
+void make_primes_multi_a(uint32_t maxn, int np, int nt) {
+	vector<future<void>>thread_v;
+	uint32_t p, t;
+	clock_t t0 = clock();
+
+	cout << "\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
+	make_msteps(np, nt);
+	cout << " c: " << setw(14) << zstr(cycle) << " -> " << setw(14) << zstr(maxn);
+	primes_v.clear();
+	for (p = 1; p <= np; ++p) primes_v.push_back(knownprime[p]);
+	primesfound = np;
+	for (t = 0; t < nt; ++t) thread_v.emplace_back(async(check_candidates, maxn, np, t));
+	for (auto& t : thread_v) t.get();
+	cout << " !: " << setw(14) << zstr(primesfound) << " primes in ";
+	cout << lapsed_time(t0) << " - sort - ";
+	sort(primes_v.begin(), primes_v.end());
+	cout << " last: " << setw(14) << zstr(primes_v[primesfound - 1]) << " in " << lapsed_time(t0) << "\n";
+	if (primesfound < 1200) {
+		for (auto s : primes_v) cout << setw(5) << s;
+		cout << "\n\n";
+	}
+}
+
+
+void make_primes_multi_t(uint32_t maxn, int np, int nt) {
+	vector<thread>thread_v;
+	uint32_t p, t;
+	clock_t t0 = clock();
+
+	cout << "\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
+	make_msteps(np, nt);
+	cout << " c: " << setw(14) << zstr(cycle) << " -> " << setw(14) << zstr(maxn);
+	primes_v.clear();
+	for (p = 1; p <= np; ++p) primes_v.push_back(knownprime[p]);
+	primesfound = np;
+	for (t = 0; t < nt; ++t) thread_v.emplace_back(&check_candidates, maxn, np, t);
+	for (auto& t : thread_v) t.join();
+	cout << " !: " << setw(14) << zstr(primesfound) << " primes in ";
+	cout << lapsed_time(t0) << " - sort - ";
+	sort(primes_v.begin(), primes_v.end());
+	cout << " last: " << setw(14) << zstr(primes_v[primesfound - 1]) << " in " << lapsed_time(t0) << "\n";
+	if (primesfound < 1200) {
+		for (auto s : primes_v) cout << setw(5) << s;
+		cout << "\n\n";
+	}
+}
+
+
+void make_primes_single_1(uint32_t maxn, int np, int nt) {
 	uint32_t p,t;
 	clock_t t0 = clock();
 
-	cout << "\n\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
+	cout << "\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
 	make_msteps(np, nt);
 	cout << " c: " << setw(14) << zstr(cycle) << " -> " << setw(14) << zstr(maxn);
 	primes_v.clear();
@@ -279,7 +327,7 @@ void make_primes_multi (uint32_t maxn, int np, int nt) {
 	cout << " !: " << setw(14) << zstr(primesfound) << " primes in ";
 	cout << lapsed_time(t0) << " - sort - ";
 	sort(primes_v.begin(), primes_v.end());
-	cout << " last: " << setw(14) << zstr(primes_v[primesfound - 1]) << " in " << lapsed_time(t0) << "\n\n";
+	cout << " last: " << setw(14) << zstr(primes_v[primesfound - 1]) << " in " << lapsed_time(t0) << "\n";
 	if (primesfound < 1200) {
 		for (auto s : primes_v) cout << setw(5) << s;
 		cout << "\n\n";
@@ -288,12 +336,12 @@ void make_primes_multi (uint32_t maxn, int np, int nt) {
 
 
 
-void make_primes_single(uint32_t maxn, int np, int nt) {
+void make_primes_single_0(uint32_t maxn, int np, int nt) {
 	uint32_t divisor, di, candidate, ci, i, pn, start = knownprime[np + 1];
 	bool divides;
 	clock_t t0 = clock();
 
-	cout << "\n\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
+	cout << "\n np:" << setw(2) << np << " nt:" << setw(2) << nt;
 	make_msteps(np, nt);
 	cout << " c: " << setw(14) << zstr(cycle) << " -> " << setw(14) << zstr(maxn);
 	primes_v.clear();
@@ -328,7 +376,7 @@ void make_primes_single(uint32_t maxn, int np, int nt) {
 		//cout << " new ci  " << setw(5) << ci;
 	}
 	cout << " !: " << setw(14) << zstr(pn) << " primes,                          last: ";
-	cout << setw(14) << zstr(primes_v[pn - 1]) << " in " << lapsed_time(t0) << "\n\n";
+	cout << setw(14) << zstr(primes_v[pn - 1]) << " in " << lapsed_time(t0) << "\n";
 	if (pn < 1200) {
 		for (auto s : primes_v) cout << setw(5) << s;
 		cout << "\n\n";
@@ -337,13 +385,19 @@ void make_primes_single(uint32_t maxn, int np, int nt) {
 
 void loop() {
 	cout << "\n\n";
+	make_primes_single_0(pow(2, 24), 8, 8);
+	make_primes_single_1(pow(2, 24), 8, 8);
+	for (int i=1;i<9;++i) make_primes_multi_t(pow(2, 24), 8, i);
 }
 
 int main() {
+	uint32_t maxn = pow(2, 10);
 	//cout << "\n\n " << zstr(step_v.max_size());
 	//for (int i = 0; i < 8; ++i) cout << setw(15) << zstr(mstp_v[i].max_size());
 	cout << "\n ";
-	make_primes_single(pow(2, 24), 8, 8);
-	make_primes_multi(pow(2, 24), 8, 8);
+	//make_primes_single_0(pow(2, 24), 8, 8);
+	make_primes_single_1(maxn, 8, 8);
+	//make_primes_multi_t(pow(2, 24), 8, 8);
+	make_primes_multi_a(maxn, 8, 8);
 	return(0);
 }
